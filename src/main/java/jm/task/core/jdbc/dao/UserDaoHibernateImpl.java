@@ -2,97 +2,79 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
 import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
-    Session session = Util.getSessionFactory().getCurrentSession();
     public UserDaoHibernateImpl() {
-
     }
-
 
     @Override
     public void createUsersTable() {
-        String hqlNewTable = "create table if not exists nameTable " +
-                "(id bigint auto_increment primary key, " +
-                "name varchar(64) not null, " +
-                "lastname varchar(64) not null, " +
-                "age tinyint not null);";
-        try {
+        try (Session session = Util.getSessionFactory().openSession()) {
             session.beginTransaction();
-            session.createSQLQuery(hqlNewTable).addEntity(User.class);
+            session.createNativeQuery("create table if not exists User" +
+                            "(id bigint auto_increment primary key, " +
+                            "name varchar(64) not null, " +
+                            "lastname varchar(64) not null, " +
+                            "age tinyint not null);")
+                    .executeUpdate();
             session.getTransaction().commit();
-        }
-        finally {
-            session.close();
         }
     }
 
     @Override
     public void dropUsersTable() {
-        try {
+        try (Session session = Util.getSessionFactory().openSession()) {
             session.beginTransaction();
-            session.createSQLQuery("drop table if exists nameTable").executeUpdate();
+            session.createSQLQuery("drop table if exists User")
+                    .executeUpdate();
             session.getTransaction().commit();
-        }
-        finally {
-            session.close();
         }
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        try {
+        User user = new User(name, lastName, age);
+        try (Session session = Util.getSessionFactory().getCurrentSession()) {
             session.beginTransaction();
-            User user = new User(name, lastName, age);
             session.save(user);
             session.getTransaction().commit();
-        }
-        finally {
-            session.close();
         }
     }
 
     @Override
     public void removeUserById(long id) {
-        try {
+        try (Session session = Util.getSessionFactory().openSession()) {
             session.beginTransaction();
             User user = session.get(User.class, id);
-            session.delete(user);
+            if (user != null) {
+                session.delete(user);
+            }
             session.getTransaction().commit();
-        }
-        finally {
-            session.close();
         }
     }
 
     @Override
     public List<User> getAllUsers() {
-//        List<User> userList = new ArrayList<>();
         List<User> userList;
-        try {
+        try (Session session = Util.getSessionFactory().openSession()) {
             session.beginTransaction();
-            userList = session.createQuery("from User")
-                    .getResultList();
+            userList = session.createQuery("from User").getResultList();
             session.getTransaction().commit();
-        } finally {
-            session.close();
         }
         return userList;
     }
 
     @Override
     public void cleanUsersTable() {
-        try {
+        try (Session session = Util.getSessionFactory().openSession()) {
             session.beginTransaction();
-            session.createSQLQuery("truncate table nameTable").executeUpdate();
+            session.createQuery("delete User").executeUpdate();
             session.getTransaction().commit();
-        }
-        finally {
-            session.close();
         }
     }
 }
