@@ -9,9 +9,30 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 
 public class Util {
+
+    private static final String URL = "jdbc:mysql://localhost:3306/mydb_kata";
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "Koncurrent2033";
+
+    public static Connection connection;
+    public static Connection getConnection() {
+        try {
+            connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            System.out.println("Соединение с БД установлено");
+        } catch (SQLException ex) {
+            System.err.println("Не удалось подключиться");
+            ex.printStackTrace();
+        }
+        return connection;
+    }
+
+
     private static SessionFactory sessionFactory;
     public static SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
@@ -20,9 +41,9 @@ public class Util {
 
                 Properties settings = new Properties();
                 settings.put(Environment.DRIVER, "com.mysql.jdbc.Driver");
-                settings.put(Environment.URL, "jdbc:mysql://localhost:3306/mydb_kata");
-                settings.put(Environment.USER, "root");
-                settings.put(Environment.PASS, "Koncurrent2033");
+                settings.put(Environment.URL, URL);
+                settings.put(Environment.USER, USERNAME);
+                settings.put(Environment.PASS, PASSWORD);
                 settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQLDialect");
 
                 settings.put(Environment.SHOW_SQL, "true");
